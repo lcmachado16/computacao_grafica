@@ -1,10 +1,11 @@
 
-# 🔹 Binários
+
+# Binários
 app
 *.out
 *.exe
 
-# 🔹 Objetos / build
+# Objetos / build
 *.o
 *.obj
 *.a
@@ -13,7 +14,7 @@ app
 build/
 cmake-build-*/
 
-# 🔹 Arquivos temporários
+# Arquivos temporários
 *.log
 *.tmp
 *.swp
@@ -37,7 +38,6 @@ DerivedData/
 # CMake (se usar depois)
 CMakeFiles/
 CMakeCache.txt
-Makefile
 cmake_install.cmake
 
 # GLFW / GLEW build local (se baixar manualmente)
