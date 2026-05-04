@@ -1,0 +1,45 @@
+
+# 🔹 Binários
+app
+*.out
+*.exe
+
+# 🔹 Objetos / build
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+build/
+cmake-build-*/
+
+# 🔹 Arquivos temporários
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Dependências locais (caso compile libs manualmente)
+lib/
+bin/
+
+# VS Code
+.vscode/
+
+# CLion / JetBrains
+.idea/
+
+# Xcode
+*.xcworkspace
+*.xcuserstate
+DerivedData/
+
+# CMake (se usar depois)
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+
+# GLFW / GLEW build local (se baixar manualmente)
+glfw/build/
+glew/build/
