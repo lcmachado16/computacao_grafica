@@ -64,6 +64,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     if (h == 0)
         h = 1;
 
+    // 
     glViewport(0, 0, w, h);
 
     glMatrixMode(GL_PROJECTION);
@@ -101,10 +102,15 @@ int main(int argc, char** argv)
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 
     // Tamanho da janela
-    glutInitWindowSize(400, 350);
+    int larguraJanela = 400;
+    int alturaJanela = 350;
+    glutInitWindowSize(larguraJanela, alturaJanela);
 
-    // Posição
-    glutInitWindowPosition(10, 10);
+    // Posição inicial 
+    glutInitWindowPosition(
+    (glutGet(GLUT_SCREEN_WIDTH)  - larguraJanela) / 2,
+    (glutGet(GLUT_SCREEN_HEIGHT) - alturaJanela) / 2
+);
 
     // Cria janela
     glutCreateWindow("Quadrado");
