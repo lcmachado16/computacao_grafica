@@ -1,18 +1,38 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall
+CXX = clang++
+CXXFLAGS = -std=c++17 -Wall -Wextra -g -arch arm64
 
-# Ajuste conforme sua instalação (Apple Silicon vs Intel)
-INCLUDES = -I/opt/homebrew/include
-LIBS = -L/opt/homebrew/lib -lglfw -lGLEW -framework OpenGL
+# Diretórios
+SRC_DIR = src
+INC_DIR = include
+BIN_DIR = bin/macOS
 
-SRC = main.cpp
-OUT = app
+# Arquivos
+SRC = $(SRC_DIR)/main.cpp $(SRC_DIR)/glad.c
+OUT = $(BIN_DIR)/main
 
-all:
-	$(CXX) $(SRC) $(CXXFLAGS) $(INCLUDES) $(LIBS) -o $(OUT)
+# Homebrew (Apple Silicon)
+BREW_PREFIX = /opt/homebrew
 
+# Includes
+INCLUDES = -I$(INC_DIR) -I$(BREW_PREFIX)/include
+
+# Libs (macOS + GLFW)
+LIBS = -L$(BREW_PREFIX)/lib -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+
+# Regra padrão
+all: $(OUT)
+
+# Build
+$(OUT): $(SRC)
+	mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(SRC) $(INCLUDES) $(LIBS) -o $(OUT)
+
+# Executar
 run: all
-	./$(OUT)
+	cd $(BIN_DIR) && ./main
 
+# Limpar
 clean:
-	rm -f $(OUT)
+	rm -rf $(BIN_DIR)
+
+.PHONY: all run clean
