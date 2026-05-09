@@ -1,60 +1,41 @@
-// Quadrado.cpp
-// OpenGL + GLUT funcionando no Linux/macOS
-
-// =========================================
-// Exemplo extraido de https://www.inf.pucrs.br/~manssour/OpenGL/Desenhando.html
-// Quadrado.c - Isabel H. Manssour
-// Um programa OpenGL simples que desenha um 
-// quadrado em  uma janela GLUT.
-// Este código está baseado no GLRect.c, exemplo 
-// disponível no livro "OpenGL SuperBible", 
-// 2nd Edition, de Richard S. e Wright Jr.
-// ========================================
-
-// ---------------------------------------
 #ifdef __APPLE__
-    #include <GLUT/glut.h>
+#include <GLUT/glut.h>
 #else
-    #include <GL/glut.h>
+#include <GL/glut.h>
 #endif
-// ---------------------------------------
-
 
 // ========================================
-// Variável global da cor
+// Posição do quadrado
 // ========================================
-bool verde = false;
+float quadX = 100;
+float quadY = 100;
+float tamanho = 50;
+
+bool isArrastando = false;
+
+// Offset do clique - para o quadrado nao ir para o centro do mouse na hora do clique
+float offsetX = 0;
+float offsetY = 0;
 
 // ========================================
-// Função de desenho
+// Desenha
 // ========================================
-void Desenha(void)
+void Desenha()
 {
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Limpa tela
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Cor vermelha
-    if (verde){
-        glColor3f(0.0f, 1.0f, 0.0f); // verde
-    }
-    else{
-        glColor3f(1.0f, 0.0f, 0.0f); // vermelho
-    }
-    
-    // Desenha quadrado
     glBegin(GL_QUADS);
 
-        glVertex2i(100, 150);
-        glVertex2i(100, 100);
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glVertex2f(quadX, quadY);
+    glVertex2f(quadX, quadY + tamanho);
 
-        // Muda para azul
-        glColor3f(0.0f, 0.0f, 1.0f);
-
-        glVertex2i(150, 100);
-        glVertex2i(150, 150);
+    glColor3f(0.0f, 0.7f, 1.0f);
+    glVertex2f(quadX + tamanho, quadY + tamanho);
+    glVertex2f(quadX + tamanho, quadY);
 
     glEnd();
 
@@ -62,97 +43,112 @@ void Desenha(void)
 }
 
 // ========================================
-// Callback do mouse
+// Clique do mouse
 // ========================================
 void Mouse(int botao, int estado, int x, int y)
 {
-    // Apenas clique esquerdo pressionado
-    if (botao == GLUT_LEFT_BUTTON &&
-        estado == GLUT_DOWN)
-    {
-        verde = !verde;
+    // Converte Y do mouse
+    y = glutGet(GLUT_WINDOW_HEIGHT) - y;
 
-        // Redesenha a tela
+    // Clique esquerdo
+    if (botao == GLUT_LEFT_BUTTON)
+    {
+        // Mouse pressionado
+        if (estado == GLUT_DOWN)
+        {
+            // Verifica se clicou dentro do quadrado
+            if (x >= quadX &&
+                x <= quadX + tamanho &&
+                y >= quadY &&
+                y <= quadY + tamanho)
+            {
+                isArrastando = true;
+
+                // Guarda distância entre mouse e quadrado
+                offsetX = x - quadX;
+                offsetY = y - quadY;
+            }
+        }
+
+        // Soltou mouse
+        if (estado == GLUT_UP)
+        {
+            isArrastando = false;
+        }
+    }
+}
+
+// ========================================
+// Mouse sendo arrastado
+// ========================================
+void MovimentoMouse(int x, int y)
+{
+    // Converte eixo Y
+    y = glutGet(GLUT_WINDOW_HEIGHT) - y;
+
+    if (isArrastando)
+    {
+        quadX = x - offsetX;
+        quadY = y - offsetY;
+
         glutPostRedisplay();
     }
 }
 
-
 // ========================================
-// Inicialização
-// ========================================
-void Inicializa(void)
-{
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-}
-
-// ========================================
-// Resize da janela
+// Resize
 // ========================================
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 {
     if (h == 0)
         h = 1;
 
-    // 
     glViewport(0, 0, w, h);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if (w <= h)
-    {
-        gluOrtho2D(
-            0.0f,
-            250.0f,
-            0.0f,
-            250.0f * h / w
-        );
-    }
-    else
-    {
-        gluOrtho2D(
-            0.0f,
-            250.0f * w / h,
-            0.0f,
-            250.0f
-        );
-    }
+    gluOrtho2D(0, w, 0, h);
+}
+
+// ========================================
+// Inicializa
+// ========================================
+void Inicializa()
+{
+    glClearColor(0, 0, 0, 1);
 }
 
 // ========================================
 // Main
 // ========================================
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    // Inicializa GLUT
     glutInit(&argc, argv);
 
-    // Modo de exibição
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 
-    // Tamanho da janela
-    int larguraJanela = 400;
-    int alturaJanela = 350;
+    int larguraJanela = 800;
+    int alturaJanela = 600;
     glutInitWindowSize(larguraJanela, alturaJanela);
 
-    // Posição inicial 
     glutInitWindowPosition(
-    (glutGet(GLUT_SCREEN_WIDTH)  - larguraJanela) / 2,
-    (glutGet(GLUT_SCREEN_HEIGHT) - alturaJanela) / 2
-);
+        (glutGet(GLUT_SCREEN_WIDTH) - larguraJanela) / 2,
+        (glutGet(GLUT_SCREEN_HEIGHT) - alturaJanela) / 2);
 
-    // Cria janela
-    glutCreateWindow("Quadrado");
-
-    // Callbacks
-    glutDisplayFunc(Desenha);
-    glutReshapeFunc(AlteraTamanhoJanela);
-
-    glutMouseFunc(Mouse); // callback do mouse -> altera a cor 
-
+    glutCreateWindow("Drag and Drop");
 
     Inicializa();
+
+    glutDisplayFunc(Desenha);
+
+    glutReshapeFunc(AlteraTamanhoJanela);
+
+    // Clique
+    glutMouseFunc(Mouse);
+
+    // Arrastar mouse
+    glutMotionFunc(MovimentoMouse);
 
     glutMainLoop();
 
