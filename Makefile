@@ -1,38 +1,91 @@
-CXX = clang++
-CXXFLAGS = -std=c++17 -Wall -Wextra -g -arch arm64
+# =========================
+# Compiler
+# =========================
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -g
 
+# =========================
 # Diretórios
+# =========================
 SRC_DIR = src
 INC_DIR = include
-BIN_DIR = bin/macOS
 
+# Detecta SO
+UNAME_S := $(shell uname -s)
+
+# =========================
 # Arquivos
+# =========================
 SRC = $(SRC_DIR)/main.cpp $(SRC_DIR)/glad.c
-OUT = $(BIN_DIR)/main
 
-# Homebrew (Apple Silicon)
-BREW_PREFIX = /opt/homebrew
+# =========================
+# macOS
+# =========================
+ifeq ($(UNAME_S),Darwin)
 
-# Includes
-INCLUDES = -I$(INC_DIR) -I$(BREW_PREFIX)/include
+	CXX = clang++
 
-# Libs (macOS + GLFW)
-LIBS = -L$(BREW_PREFIX)/lib -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+	# Remova esta linha se usar Intel
+	CXXFLAGS += -arch arm64
 
-# Regra padrão
+	BIN_DIR = bin/macOS
+	OUT = $(BIN_DIR)/main
+
+	BREW_PREFIX = /opt/homebrew
+
+	INCLUDES = \
+		-I$(INC_DIR) \
+		-I$(BREW_PREFIX)/include
+
+	LIBS = \
+		-L$(BREW_PREFIX)/lib \
+		-lglfw \
+		-framework OpenGL \
+		-framework GLUT \
+		-framework Cocoa \
+		-framework IOKit \
+		-framework CoreVideo
+
+endif
+
+# =========================
+# Linux
+# =========================
+ifeq ($(UNAME_S),Linux)
+
+	BIN_DIR = bin/Linux
+	OUT = $(BIN_DIR)/main
+
+	INCLUDES = -I$(INC_DIR)
+
+	LIBS = \
+		-lglfw \
+		-lglut \
+		-lGLU \
+		-lGL \
+		-ldl
+
+endif
+
+# =========================
+# Build
+# =========================
 all: $(OUT)
 
-# Build
 $(OUT): $(SRC)
 	mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(SRC) $(INCLUDES) $(LIBS) -o $(OUT)
+	$(CXX) $(SRC) $(CXXFLAGS) $(INCLUDES) $(LIBS) -o $(OUT)
 
-# Executar
+# =========================
+# Run
+# =========================
 run: all
 	cd $(BIN_DIR) && ./main
 
-# Limpar
+# =========================
+# Clean
+# =========================
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf bin
 
 .PHONY: all run clean
