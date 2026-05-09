@@ -1,154 +1,210 @@
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+// main.cpp
 
-// ========================================
-// Posição do quadrado
-// ========================================
-float quadX = 100;
-float quadY = 100;
-float tamanho = 50;
+#include <glad/glad.h>
+#include <GL/freeglut.h>
 
-bool isArrastando = false;
+#include <iostream>
 
-// Offset do clique - para o quadrado nao ir para o centro do mouse na hora do clique
-float offsetX = 0;
-float offsetY = 0;
+GLuint VAO;
+GLuint VBO;
+GLuint shaderProgram;
 
-// ========================================
-// Desenha
-// ========================================
-void Desenha()
+
+// fica praticamente igual ao arquivo GLSL original (OpenGL Shading Language).
+const char* vertexShaderSource = R"(
+#version 330 core
+
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+
+out vec3 fragColor;
+
+void main()
+{
+    gl_Position = vec4(position, 1.0);
+    fragColor = color;
+}
+)";
+
+const char* fragmentShaderSource = R"(
+#version 330 core
+
+in vec3 fragColor;
+
+out vec4 outColor;
+
+void main()
+{
+    outColor = vec4(fragColor, 1.0);
+}
+)";
+
+/*********************************
+        Vértices
+           ↓
+        Vertex Shader
+           ↓
+        Rasterização
+           ↓
+        Fragment Shader
+           ↓
+        Tela
+*********************************/
+
+void createShaders()
+{
+
+    GLuint vertexShader =
+        glCreateShader(GL_VERTEX_SHADER);
+
+    glShaderSource(
+        vertexShader,
+        1,
+        &vertexShaderSource,
+        NULL
+    );
+
+    glCompileShader(vertexShader);
+
+    // Fragment Shader: define a cor final dos pixels que serão desenhados na tela.
+    GLuint fragmentShader =
+        glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(
+        fragmentShader,
+        1,
+        &fragmentShaderSource,
+        NULL
+    );
+
+    glCompileShader(fragmentShader);
+
+    shaderProgram = glCreateProgram();
+
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+
+    glLinkProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+}
+
+void createTriangle()
+{
+    float vertices[] =
+    {
+        // posição        // cor
+
+         0.0f,  0.5f, 0.0f,
+         1.0f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f, 0.0f,
+         0.0f,  1.0f, 0.0f,
+
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        sizeof(vertices),
+        vertices,
+        GL_STATIC_DRAW
+    );
+
+    // posição
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)0
+    );
+
+    glEnableVertexAttribArray(0);
+
+    // cor
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
+}
+
+void render()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    glUseProgram(shaderProgram);
 
-    glBegin(GL_QUADS);
+    glBindVertexArray(VAO);
 
-    glColor3f(1.0f, 0.0f, 1.0f);
-    glVertex2f(quadX, quadY);
-    glVertex2f(quadX, quadY + tamanho);
+    // Rasterização acontece aqui
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    glColor3f(0.0f, 0.7f, 1.0f);
-    glVertex2f(quadX + tamanho, quadY + tamanho);
-    glVertex2f(quadX + tamanho, quadY);
-
-    glEnd();
-
-    glFlush();
+    glutSwapBuffers();
 }
 
-// ========================================
-// Clique do mouse
-// ========================================
-void Mouse(int botao, int estado, int x, int y)
+void init()
 {
-    // Converte Y do mouse
-    y = glutGet(GLUT_WINDOW_HEIGHT) - y;
-
-    // Clique esquerdo
-    if (botao == GLUT_LEFT_BUTTON)
+    // Inicializa GLAD
+    if (!gladLoadGL())
     {
-        // Mouse pressionado
-        if (estado == GLUT_DOWN)
-        {
-            // Verifica se clicou dentro do quadrado
-            if (x >= quadX &&
-                x <= quadX + tamanho &&
-                y >= quadY &&
-                y <= quadY + tamanho)
-            {
-                isArrastando = true;
-
-                // Guarda distância entre mouse e quadrado
-                offsetX = x - quadX;
-                offsetY = y - quadY;
-            }
-        }
-
-        // Soltou mouse
-        if (estado == GLUT_UP)
-        {
-            isArrastando = false;
-        }
+        std::cout << "Erro ao inicializar GLAD\n";
+        exit(-1);
     }
+
+    std::cout << "OpenGL: "
+              << glGetString(GL_VERSION)
+              << std::endl;
+
+    createShaders();
+
+    createTriangle();
+
+    glClearColor(
+        0.1f,
+        0.1f,
+        0.1f,
+        1.0f
+    );
 }
 
-// ========================================
-// Mouse sendo arrastado
-// ========================================
-void MovimentoMouse(int x, int y)
-{
-    // Converte eixo Y
-    y = glutGet(GLUT_WINDOW_HEIGHT) - y;
-
-    if (isArrastando)
-    {
-        quadX = x - offsetX;
-        quadY = y - offsetY;
-
-        glutPostRedisplay();
-    }
-}
-
-// ========================================
-// Resize
-// ========================================
-void AlteraTamanhoJanela(GLsizei w, GLsizei h)
-{
-    if (h == 0)
-        h = 1;
-
-    glViewport(0, 0, w, h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    gluOrtho2D(0, w, 0, h);
-}
-
-// ========================================
-// Inicializa
-// ========================================
-void Inicializa()
-{
-    glClearColor(0, 0, 0, 1);
-}
-
-// ========================================
-// Main
-// ========================================
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
 
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitDisplayMode(
+        GLUT_DOUBLE | GLUT_RGBA
+    );
 
-    int larguraJanela = 800;
-    int alturaJanela = 600;
-    glutInitWindowSize(larguraJanela, alturaJanela);
+    // OpenGL 3.3 Core
+    glutInitContextVersion(3, 3);
+    glutInitContextProfile(
+        GLUT_CORE_PROFILE
+    );
 
-    glutInitWindowPosition(
-        (glutGet(GLUT_SCREEN_WIDTH) - larguraJanela) / 2,
-        (glutGet(GLUT_SCREEN_HEIGHT) - alturaJanela) / 2);
+    glutInitWindowSize(800, 600);
 
-    glutCreateWindow("Drag and Drop");
+    glutCreateWindow("OpenGL + GLAD");
 
-    Inicializa();
+    init();
 
-    glutDisplayFunc(Desenha);
-
-    glutReshapeFunc(AlteraTamanhoJanela);
-
-    // Clique
-    glutMouseFunc(Mouse);
-
-    // Arrastar mouse
-    glutMotionFunc(MovimentoMouse);
+    glutDisplayFunc(render);
 
     glutMainLoop();
 
