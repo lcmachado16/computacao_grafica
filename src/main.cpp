@@ -11,11 +11,19 @@
 // 2nd Edition, de Richard S. e Wright Jr.
 // ========================================
 
+// ---------------------------------------
 #ifdef __APPLE__
     #include <GLUT/glut.h>
 #else
     #include <GL/glut.h>
 #endif
+// ---------------------------------------
+
+
+// ========================================
+// Variável global da cor
+// ========================================
+bool verde = false;
 
 // ========================================
 // Função de desenho
@@ -29,8 +37,13 @@ void Desenha(void)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Cor vermelha
-    glColor3f(1.0f, 0.0f, 0.0f);
-
+    if (verde){
+        glColor3f(0.0f, 1.0f, 0.0f); // verde
+    }
+    else{
+        glColor3f(1.0f, 0.0f, 0.0f); // vermelho
+    }
+    
     // Desenha quadrado
     glBegin(GL_QUADS);
 
@@ -47,6 +60,23 @@ void Desenha(void)
 
     glFlush();
 }
+
+// ========================================
+// Callback do mouse
+// ========================================
+void Mouse(int botao, int estado, int x, int y)
+{
+    // Apenas clique esquerdo pressionado
+    if (botao == GLUT_LEFT_BUTTON &&
+        estado == GLUT_DOWN)
+    {
+        verde = !verde;
+
+        // Redesenha a tela
+        glutPostRedisplay();
+    }
+}
+
 
 // ========================================
 // Inicialização
@@ -118,6 +148,9 @@ int main(int argc, char** argv)
     // Callbacks
     glutDisplayFunc(Desenha);
     glutReshapeFunc(AlteraTamanhoJanela);
+
+    glutMouseFunc(Mouse); // callback do mouse -> altera a cor 
+
 
     Inicializa();
 
